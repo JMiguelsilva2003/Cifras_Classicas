@@ -5,6 +5,7 @@ import 'package:projeto_cifras/ciphers/monoalphabetic_cipher.dart';
 import 'package:projeto_cifras/ciphers/playfair_cipher.dart';
 import 'package:projeto_cifras/ciphers/hill_cipher.dart';
 import 'package:projeto_cifras/ciphers/vigenere_cipher.dart';
+import 'package:projeto_cifras/ciphers/vernam_cipher.dart';
 
 enum CipherType {
   caesar,
@@ -12,6 +13,7 @@ enum CipherType {
   playfair,
   hill,
   vigenere,
+  vernam,
 }
 
 const Map<CipherType, String> cipherNames = {
@@ -20,6 +22,7 @@ const Map<CipherType, String> cipherNames = {
   CipherType.playfair: '3. Cifra de Playfair',
   CipherType.hill: '4. Cifra de Hill',
   CipherType.vigenere: '5. Cifra de Vigenère',
+  CipherType.vernam: '6. Cifra de Vernam (com XOR)',
 };
 
 class HomePage extends StatefulWidget {
@@ -41,6 +44,7 @@ class _HomePageState extends State<HomePage> {
   final PlayfairCipher _playfairCipher = PlayfairCipher();
   final HillCipher _hillCipher = HillCipher();
   final VigenereCipher _vigenereCipher = VigenereCipher();
+  final VernamCipher _vernamCipher = VernamCipher();
 
   CipherType _selectedCipher = CipherType.caesar;
 
@@ -91,6 +95,12 @@ class _HomePageState extends State<HomePage> {
         error = _vigenereCipher.validateKey(keyText);
         if (error == null) {
           encryptedText = _vigenereCipher.encrypt(originalText, keyText);
+        }
+        break;
+      case CipherType.vernam:
+        error = _vernamCipher.validateKey(keyText);
+        if (error == null) {
+          encryptedText = _vernamCipher.encrypt(originalText, keyText);
         }
         break;
     }
@@ -149,6 +159,13 @@ class _HomePageState extends State<HomePage> {
           decryptedText = _vigenereCipher.decrypt(originalText, keyText);
         }
         break;
+
+      case CipherType.vernam:
+        error = _vernamCipher.validateKey(keyText);
+        if (error == null) {
+          decryptedText = _vernamCipher.decrypt(originalText, keyText);
+        }
+        break;
     }
 
     setState(() {
@@ -170,7 +187,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    
     String keyLabel = 'Chave';
     String keyHint = '';
     TextInputType keyKeyboardType = TextInputType.text;
@@ -192,8 +208,9 @@ class _HomePageState extends State<HomePage> {
         keyCapitalization = TextCapitalization.characters;
         break;
       case CipherType.playfair:
+      case CipherType.vigenere:
         keyLabel = 'Chave (Palavra-chave)';
-        keyHint = 'Ex: MONARQUIA';
+        keyHint = 'Ex: CHAVE';
         keyFormatters = [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]'))];
         keyCapitalization = TextCapitalization.characters;
         break;
@@ -205,12 +222,11 @@ class _HomePageState extends State<HomePage> {
         keyFormatters = [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]'))];
         keyCapitalization = TextCapitalization.characters;
         break;
-      
-      case CipherType.vigenere:
-        keyLabel = 'Chave (Palavra-chave)';
-        keyHint = 'Ex: CHAVE';
-        keyFormatters = [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]'))];
-        keyCapitalization = TextCapitalization.characters;
+      case CipherType.vernam:
+        keyLabel = 'Chave (Pode ser qualquer texto)';
+        keyHint = 'Ex: segredo123!@#';
+        keyFormatters = [];
+        keyCapitalization = TextCapitalization.none;
         break;
     }
 
