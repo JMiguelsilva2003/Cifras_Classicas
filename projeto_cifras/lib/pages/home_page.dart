@@ -60,6 +60,8 @@ class _HomePageState extends State<HomePage> {
   CipherType _selectedCipher = CipherType.caesar;
 
   void _encrypt() {
+    setState(() { _resultText = ""; });
+
     final String originalText = _textController.text;
     final String key1 = _key1Controller.text;
     final String key2 = _key2Controller.text;
@@ -133,7 +135,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _decrypt() {
-    final String originalText = _textController.text;
+    final String inputText = _resultText.isNotEmpty 
+        ? _resultText
+        : _textController.text;
+    
     final String key1 = _key1Controller.text;
     final String key2 = _key2Controller.text;
     final int? numKey = int.tryParse(_numKeyController.text);
@@ -144,58 +149,58 @@ class _HomePageState extends State<HomePage> {
     switch (_selectedCipher) {
       case CipherType.caesar:
         if (numKey == null) error = "Chave numérica inválida.";
-        else decryptedText = _caesarCipher.decrypt(originalText, numKey);
+        else decryptedText = _caesarCipher.decrypt(inputText, numKey);
         break;
       
       case CipherType.monoalphabetic:
         error = _monoCipher.validateKey(key1);
-        if (error == null) decryptedText = _monoCipher.decrypt(originalText, key1);
+        if (error == null) decryptedText = _monoCipher.decrypt(inputText, key1);
         break;
 
       case CipherType.playfair:
       case CipherType.columnar:
         if (key1.isEmpty) error = "A Chave 1 não pode ser vazia.";
         else decryptedText = (_selectedCipher == CipherType.playfair)
-            ? _playfairCipher.decrypt(originalText, key1)
-            : _columnarCipher.decrypt(originalText, key1);
+            ? _playfairCipher.decrypt(inputText, key1)
+            : _columnarCipher.decrypt(inputText, key1);
         break;
       
       case CipherType.hill:
         if (numKey == null || numKey < 2) error = 'm deve ser >= 2.';
         else {
           error = _hillCipher.validateKey(key1, numKey);
-          if (error == null) decryptedText = _hillCipher.decrypt(originalText, key1, numKey);
+          if (error == null) decryptedText = _hillCipher.decrypt(inputText, key1, numKey);
         }
         break;
       
       case CipherType.vigenere:
         error = _vigenereCipher.validateKey(key1);
-        if (error == null) decryptedText = _vigenereCipher.decrypt(originalText, key1);
+        if (error == null) decryptedText = _vigenereCipher.decrypt(inputText, key1);
         break;
 
       case CipherType.vernam:
         error = _vernamCipher.validateKey(key1);
-        if (error == null) decryptedText = _vernamCipher.decrypt(originalText, key1);
+        if (error == null) decryptedText = _vernamCipher.decrypt(inputText, key1);
         break;
 
       case CipherType.oneTimePad:
-        decryptedText = _otpCipher.decrypt(originalText, key1);
+        decryptedText = _otpCipher.decrypt(inputText, key1);
         if (decryptedText.startsWith('Erro:')) error = decryptedText;
         break;
       
       case CipherType.railFence:
         if (numKey == null || numKey <= 1) error = "Nº de Trilhos deve ser > 1.";
-        else decryptedText = _railFenceCipher.decrypt(originalText, numKey);
+        else decryptedText = _railFenceCipher.decrypt(inputText, numKey);
         break;
       
       case CipherType.doubleTransposition:
         if (key1.isEmpty || key2.isEmpty) error = "Ambas as chaves são obrigatórias.";
-        else decryptedText = _doubleCipher.decrypt(originalText, key1, key2);
+        else decryptedText = _doubleCipher.decrypt(inputText, key1, key2);
         break;
       
       case CipherType.custom:
         if (numKey == null || numKey <= 1) error = "Chave Numérica deve ser > 1.";
-        else decryptedText = _customCipher.decrypt(originalText, key1, numKey);
+        else decryptedText = _customCipher.decrypt(inputText, key1, numKey);
         if (decryptedText.startsWith('Erro:')) error = decryptedText;
         break;
     }
@@ -265,7 +270,7 @@ class _HomePageState extends State<HomePage> {
       case CipherType.oneTimePad:
         showKey1 = true;
         int textLength = utf8.encode(_textController.text).length;
-        key1Label = 'Chave (Pelo menos $textLength bytes)';
+        key1Label = 'Chave (tão longa quanto o texto)';
         key1Hint = 'Deve ter no mínimo $textLength caracteres/bytes';
         break;
       case CipherType.railFence:
@@ -322,6 +327,11 @@ class _HomePageState extends State<HomePage> {
             onChanged: (text) {
               if (_selectedCipher == CipherType.oneTimePad) {
                 setState(() {});
+              }
+              if (_resultText.isNotEmpty) {
+                setState(() {
+                  _resultText = "";
+                });
               }
             },
           ),
