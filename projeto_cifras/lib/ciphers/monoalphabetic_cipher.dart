@@ -6,22 +6,13 @@ class MonoalphabeticCipher {
 
   String? validateKey(String key) {
     String upperKey = key.toUpperCase();
-    
-    if (upperKey.length != 26) {
-      return 'Erro: A chave deve ter exatamente 26 letras.';
-    }
-
+    if (upperKey.length != 26) return 'Erro: A chave deve ter exatamente 26 letras.';
     final Set<String> uniqueChars = HashSet<String>();
     for (int i = 0; i < upperKey.length; i++) {
       String char = upperKey[i];
-      if (!_alphabet.contains(char)) {
-        return 'Erro: A chave só pode conter letras do alfabeto.';
-      }
-      if (!uniqueChars.add(char)) {
-        return 'Erro: A chave contém letras repetidas (ex: $char).';
-      }
+      if (!_alphabet.contains(char)) return 'Erro: A chave só pode conter letras do alfabeto.';
+      if (!uniqueChars.add(char)) return 'Erro: A chave contém letras repetidas (ex: $char).';
     }
-    
     return null;
   }
 
@@ -32,9 +23,9 @@ class MonoalphabeticCipher {
 
     for (int i = 0; i < upperText.length; i++) {
       String char = upperText[i];
-      int charIndex = _alphabet.indexOf(char);
+      int charIndex = _alphabet.indexOf(char); 
 
-      if (charIndex != -1) {
+      if (charIndex != -1) { 
         result += upperKey[charIndex];
       } else {
         result += char;
@@ -50,7 +41,7 @@ class MonoalphabeticCipher {
 
     for (int i = 0; i < upperText.length; i++) {
       String char = upperText[i];
-      int charIndex = upperKey.indexOf(char);
+      int charIndex = upperKey.indexOf(char); 
 
       if (charIndex != -1) {
         result += _alphabet[charIndex];
