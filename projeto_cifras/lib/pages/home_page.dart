@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import 'dart:math';
+import 'package:projeto_cifras/analysis/analysis_service.dart';
 import 'package:projeto_cifras/ciphers/caesar_cipher.dart';
 import 'package:projeto_cifras/ciphers/monoalphabetic_cipher.dart';
 import 'package:projeto_cifras/ciphers/playfair_cipher.dart';
@@ -58,15 +60,15 @@ class _HomePageState extends State<HomePage> {
   final CustomCipher _customCipher = CustomCipher();
 
   CipherType _selectedCipher = CipherType.caesar;
+  final Random _random = Random();
+
 
   void _encrypt() {
     setState(() { _resultText = ""; });
-
     final String originalText = _textController.text;
     final String key1 = _key1Controller.text;
     final String key2 = _key2Controller.text;
     final int? numKey = int.tryParse(_numKeyController.text);
-
     String encryptedText = "";
     String? error;
 
@@ -132,17 +134,17 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _resultText = (error != null) ? error : encryptedText;
     });
+    if (error == null) {
+      AnalysisService.instance.updateTexts(originalText, encryptedText);
+    }
   }
 
   void _decrypt() {
     final String inputText = _resultText.isNotEmpty 
-        ? _resultText
-        : _textController.text;
-    
+        ? _resultText : _textController.text;
     final String key1 = _key1Controller.text;
     final String key2 = _key2Controller.text;
     final int? numKey = int.tryParse(_numKeyController.text);
-
     String decryptedText = "";
     String? error;
 
@@ -208,6 +210,10 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _resultText = (error != null) ? error : decryptedText;
     });
+
+    if (error == null) {
+      AnalysisService.instance.updateTexts(decryptedText, inputText);
+    }
   }
 
   void _onCipherChanged(CipherType? newCipher) {
@@ -222,6 +228,74 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
+
+  void _generateKey() {
+    const List<String> wordList = [
+      'ZEBRA', 'COMPUTADOR', 'MONARQUIA', 'SEGURANCA', 
+      'FLUTTER', 'PROJETO', 'CLASSICA', 'CRIPTOGRAFIA'
+    ];
+    List<String> alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+    String key1 = '';
+    String key2 = '';
+    String numKey = '';
+    bool generated = true;
+
+    switch (_selectedCipher) {
+      case CipherType.caesar:
+      case CipherType.railFence:
+        numKey = (_random.nextInt(5) + 3).toString();
+        _numKeyController.text = numKey;
+        break;
+      
+      case CipherType.monoalphabetic:
+        alphabet.shuffle(_random);
+        key1 = alphabet.join();
+        _key1Controller.text = key1;
+        break;
+
+      case CipherType.playfair:
+      case CipherType.vigenere:
+      case CipherType.columnar:
+        key1 = wordList[_random.nextInt(wordList.length)];
+        _key1Controller.text = key1;
+        break;
+
+      case CipherType.doubleTransposition:
+        key1 = wordList[_random.nextInt(wordList.length)];
+        key2 = wordList[_random.nextInt(wordList.length)];
+        _key1Controller.text = key1;
+        _key2Controller.text = key2;
+        break;
+      
+      case CipherType.custom:
+        key1 = wordList[_random.nextInt(wordList.length)];
+        numKey = (_random.nextInt(4) + 2).toString();
+        _key1Controller.text = key1;
+        _numKeyController.text = numKey;
+        break;
+
+      default:
+        generated = false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Geração de chave não suportada para esta cifra.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        break;
+    }
+
+    if (generated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nova chave aleatória gerada!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -329,9 +403,7 @@ class _HomePageState extends State<HomePage> {
                 setState(() {});
               }
               if (_resultText.isNotEmpty) {
-                setState(() {
-                  _resultText = "";
-                });
+                setState(() { _resultText = ""; });
               }
             },
           ),
@@ -384,7 +456,7 @@ class _HomePageState extends State<HomePage> {
                 onPressed: _encrypt,
                 style: ElevatedButton.styleFrom(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 ),
               ),
               ElevatedButton.icon(
@@ -393,12 +465,22 @@ class _HomePageState extends State<HomePage> {
                 onPressed: _decrypt,
                 style: ElevatedButton.styleFrom(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          TextButton.icon(
+            icon: const Icon(Icons.vpn_key_outlined, size: 18),
+            label: const Text('Gerar Chave Aleatória'),
+            onPressed: _generateKey,
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[400],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 16),
           Text(

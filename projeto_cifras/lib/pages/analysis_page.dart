@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:projeto_cifras/analysis/frequency_analyzer.dart';
 import 'dart:math';
+import 'package:projeto_cifras/analysis/analysis_service.dart';
 
 class AnalysisPage extends StatefulWidget {
   const AnalysisPage({super.key});
@@ -22,7 +23,22 @@ class _AnalysisPageState extends State<AnalysisPage> {
   @override
   void initState() {
     super.initState();
-    _analyze();
+    AnalysisService.instance.textPair.addListener(_updateFieldsFromService);
+    
+    _updateFieldsFromService();
+  }
+
+  @override
+  void dispose() {
+    AnalysisService.instance.textPair.removeListener(_updateFieldsFromService);
+    _originalController.dispose();
+    _cipheredController.dispose();
+    super.dispose();
+  }
+  void _updateFieldsFromService() {
+    final pair = AnalysisService.instance.textPair.value;
+    _originalController.text = pair.original;
+    _cipheredController.text = pair.ciphered;
   }
 
   void _analyze() {
@@ -43,7 +59,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
             controller: _originalController,
             decoration: const InputDecoration(
               labelText: 'Texto Original',
-              hintText: 'Cole o texto original aqui',
+              hintText: 'Automático ou cole o texto aqui',
               border: OutlineInputBorder(),
             ),
             maxLines: 5,
@@ -53,7 +69,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
             controller: _cipheredController,
             decoration: const InputDecoration(
               labelText: 'Texto Cifrado',
-              hintText: 'Cole o texto cifrado aqui',
+              hintText: 'Automático ou cole o texto aqui',
               border: OutlineInputBorder(),
             ),
             maxLines: 5,
@@ -115,14 +131,12 @@ class _AnalysisPageState extends State<AnalysisPage> {
     Map<String, double> data,
     Color color,
   ) {
-    
     double maxFreq = 0.0;
     if (data.values.isNotEmpty) {
       maxFreq = data.values.reduce(max);
     }
-
     double chartMaxY = max(20.0, (maxFreq / 10).ceil() * 10.0);
-
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -143,11 +157,9 @@ class _AnalysisPageState extends State<AnalysisPage> {
           child: BarChart(
             BarChartData(
               maxY: chartMaxY, 
-              
               gridData: const FlGridData(show: false),
               borderData: FlBorderData(show: false),
               alignment: BarChartAlignment.spaceAround,
-              
               titlesData: FlTitlesData(
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
@@ -164,7 +176,6 @@ class _AnalysisPageState extends State<AnalysisPage> {
                     },
                   ),
                 ),
-                
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -172,7 +183,6 @@ class _AnalysisPageState extends State<AnalysisPage> {
                     getTitlesWidget: (value, meta) {
                       final index = value.toInt();
                       String text = String.fromCharCode(index + 65);
-                      
                       return SideTitleWidget(
                         meta: meta,
                         angle: -pi / 2,
@@ -181,11 +191,9 @@ class _AnalysisPageState extends State<AnalysisPage> {
                     },
                   ),
                 ),
-                
                 topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
-
               barGroups: data.entries.toList().asMap().entries.map((entry) {
                 final index = entry.key;
                 final percentage = entry.value.value;
